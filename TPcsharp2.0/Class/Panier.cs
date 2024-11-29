@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ namespace TPcsharp2._0
         int nbArticle;
         float totalPanier;
 
-        public Panier()
+        public Panier(MySqlConnection connexion)
         {
             panier = new List<Produit>();
         }

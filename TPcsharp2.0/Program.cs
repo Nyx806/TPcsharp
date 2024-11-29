@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TPcsharp2._0;
+using MySQL.Data;
+using MySql.Data.MySqlClient;
 
 namespace ConsoleAppTest
 {
@@ -13,55 +15,62 @@ namespace ConsoleAppTest
     {
         static void Main(string[] args)
         {
-            Panier panier = new Panier();
-            int ajoutPanier = 0;
-            
-            List<Produit> produits = new List<Produit>
-            {
-                new Produit("produit 1", 12, 4, 1),
-                new Produit("produit 2", 20, 4, 2),
-                new Produit("produit 3", 50, 4, 3),
-            };
+            string connectionString = "Server=localhost;Database=tp_cs;Uid=root"; 
+            using var connexion = new MySqlConnection(connectionString);
 
+            string command = "SELECT name,price,numberOfArticle,article_code FROM article";
+            connexion.Open();
 
-            while (true)
-            {
-                Console.Clear(); 
+            List<Produit> produits = new List<Produit>();
 
+            using var requette = new MySqlCommand(command, connexion);
+            using var reader = requette.ExecuteReader();
 
-
-                Console.WriteLine("   #####    #####   ### ###   #####    ######           ######   #######  ### ###  #######  ##  ###   ######  #######\r\n  ### ###  ### ###  ### ###  ### ###   # ## #           ### ###  ### ###  ### ###  ### ###  ### ###   # ## #  ### ###\r\n  ### ###  ###      ### ###  ### ###     ##             ### ###  ###      ### ###  ###      #######     ##    ###\r\n  #######  ###      #######  #######     ##             ######   #####    ### ###  #####    #######     ##    #####\r\n  ### ###  ###      ### ###  ### ###     ##             ### ##   ###      ### ###  ###      ### ###     ##    ###\r\n  ### ###  ### ###  ### ###  ### ###     ##             ### ###  ### ###   #####   ### ###  ### ###     ##    ### ###\r\n  ### ###   #####   ### ###  ### ###     ##             ### ###  #######    ###    #######  ### ###     ##    #######\r\n\r\n");
-
-                foreach (Produit produit in produits)
-                {
-                    Console.WriteLine(produit);                   
-                }
-
-                if (panier != null)
-                {
-                    panier.afficheContenu();
-                }
-
-                Console.Write("entrez le code produit pour l'ajouter au panier ou entrez 999 si vous voulez ajouter un produit : ");
-                string input = Console.ReadLine();
-
-                if (int.TryParse(input, out ajoutPanier))
-                {
-                    Produit produitSelectionner = produits.Find(p => p.CodeProduit == ajoutPanier);
-
-                    if (produitSelectionner.QantiteEnStock > 0)
-                    {
-                        panier.addProduit(produitSelectionner);
-                        produitSelectionner.QantiteEnStock--;
-                        panier.totalProduit(produitSelectionner.Prix);
-                    }
-                    else
-                    {
-                        Console.WriteLine("cette article à été victime de son succès");
-                    }
-                }
+            while(reader.Read()) {
+                var produit = new Produit
+                (
+                    reader.GetString("name"), // Lecture du champ 'Nom'
+                    reader.GetDecimal("price"), // Lecture du champ 'Prix'
+                    reader.GetInt32("numberOfArticle"),
+                    reader.GetInt32("article_code")
+                );
+                produits.Add(produit);
             }
-                
+
+
+
+
+            Panier panier = new Panier(connexion);
+
+
+
+            int ajoutPanier = 0;
+
+           
+            
+            Console.WriteLine("   #####    #####   ### ###   #####    ######           ######   #######  ### ###  #######  ##  ###   ######  #######\r\n  ### ###  ### ###  ### ###  ### ###   # ## #           ### ###  ### ###  ### ###  ### ###  ### ###   # ## #  ### ###\r\n  ### ###  ###      ### ###  ### ###     ##             ### ###  ###      ### ###  ###      #######     ##    ###\r\n  #######  ###      #######  #######     ##             ######   #####    ### ###  #####    #######     ##    #####\r\n  ### ###  ###      ### ###  ### ###     ##             ### ##   ###      ### ###  ###      ### ###     ##    ###\r\n  ### ###  ### ###  ### ###  ### ###     ##             ### ###  ### ###   #####   ### ###  ### ###     ##    ### ###\r\n  ### ###   #####   ### ###  ### ###     ##             ### ###  #######    ###    #######  ### ###     ##    #######\r\n\r\n");
+
+            foreach (var produit in produits) {
+                Console.WriteLine(produits);
+            }
+
+            Console.WriteLine(" pour ajouter un article a votre panier rentré son code produit : ");
+            ajoutPanier = Console.Read();
+
+            var produitTrouve = produits.FirstOrDefault(p => p.CodeProduit == ajoutPanier); 
+            if (produitTrouve != null)
+            {
+                var requetteUpdate = "";
+                using var execCommand = new MySqlCommand(requetteUpdate,connexion);
+                using var exec = execCommand.ExecuteReader();
+
+                panier.addProduit(produitTrouve);
+
+            }
+           
+
+
+
         }
     }
 }
